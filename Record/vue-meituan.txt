@@ -1,0 +1,355 @@
+﻿	
+		仿美团
+
+1.svg转换iocn图标	
+
+	地址:https://icomoon.io/
+
+2.准备数据
+	再src同级目录下新建data文件夹,里面放xxx.json文件数据
+
+	在webpack.dev.conf.js 中mock数据
+
+	1.mock数据,导入express
+	const express = require('express')
+	// 创建express实例
+	const app = express()
+
+	2.引入数据
+	var goods = require('../data/goods.json');
+	var ratings = require('../data/ratings.json');
+	var sellers = require('../data/sellers.json');
+
+	3.在下方找到devServer对象,也就是在watchOptions下方加入bofore方法
+		watchOptions:{
+			...
+		}
+		,
+		before(app){
+			app.get('/api/goods',(req,res)=>{
+				res.json(goods)
+			})
+
+			app.get('/api/ratings',(req,res)=>{
+				res.json(ratings)
+			})
+
+			app.get('/api/seller',(req,res)=>{
+				res.json(seller)
+			})
+		}
+	4.获取数据地址
+		http://localhost:8080/api/goods
+
+3.获取重置样式.将reset.css文件,放入static目录中的css文件夹中
+	1.reset.css文件获取地址:https://meyerweb.com/eric/tools/css/reset/index.html
+
+	2.在vue项目index.html中引入
+		<link rel="stylesheet" href="static/css/reset.css">
+
+4.在路由js配置文件中加入
+	mode:'history',//去掉地址懒的 #/
+  	linkActiveClass:'active'//将选中的元素自动添加.active样式
+
+5.请求数据
+
+	1.在App.vue中使用fetch请求数据
+
+	2.在created方法中请求到数据然后通过属性绑定传入header组件中
+
+	3.goods.vue中再created属性中使用fetch请求数据,绑定到购物车,详情, 列表中去
+
+6.公告弹窗的过渡动画
+	1.使用transition标签包裹需要动画的元素,动画名称为name属性值bulletin
+
+		<transition name="bulletin"> 
+			这里是动画的包裹盒子
+		</transition>
+
+	2.编写css过渡动画样式
+
+		/* 动画效果 */ 
+		.bulletin-enter-active,
+		.bulletin-leave-active {
+			transition: 2s all;
+		}
+
+		.bulletin-enter,
+		.bulletin-leave-to {
+			opacity: 0;
+		}
+
+		.bulletin-enter-to,
+		.bulletin-leave {
+			opacity: 1;
+		}
+
+7.计算星级评分
+	// 星星长度 
+	const LENGTH = 5
+	// 星星的状态
+	const CLS_ON = 'on' //全星
+	const CLS_HALF = 'half' //半星
+	const CLS_OFF = 'off' //灰星
+
+	在conputed属性中定义
+
+		itemClasses() {
+			let result = [];
+
+			// 4.7分*2=9.4  向下取整得9 分,再除以2 等于4.5
+			let score = Math.floor(this.score * 2) / 2; //4.5
+
+			let hasDecimal = score % 1 !== 0;	// 半星
+
+			let integer = Math.floor(score); //4.5向下取整得4个全星
+			
+			for (let i = 0; i < integer; i++) {//1.先遍历全星
+				result.push(CLS_ON);
+			}
+			
+			if (hasDecimal) {//2.再处理半星
+				result.push(CLS_HALF);
+			}
+			
+			while (result.length < LENGTH) {//补齐
+				result.push(CLS_OFF);
+			}
+			return result;
+		}
+
+8.使用滚动插件better-scroll
+	地址:
+		https://ustbhuangyi.github.io/better-scroll/doc/zh-hans/installation.html#npm
+
+	安装
+		npm install better-scroll --save
+	使用
+		<div class="wrapper">
+			<ul class="content">
+				<li>...</li>
+				<li>...</li>
+				...
+			</ul>
+		</div>
+	通过ref拿到元素(click:true,需要加上,因为它会导致点击事件失效)
+		
+      this.foodScroll = new BScroll(this.$refs.foodScroll,{
+        probeType:3,
+        click:true
+      })
+
+9.点击左侧列表联动到右侧内容列表
+	1.拿到左右ul列表里面的li(定义ref为foodScroll的右侧内容)
+		let foodList = this.$refs.foodScroll.getElementsByClassName("food-list-hook")
+	2.将foodList放入数组中,由于是放在created中执行,会导致页面加载不完全时获取不到滚动高度和分来去间高度,获取到的li高度不对,使用this.$nextTick()
+
+	3.拿到所有高度
+		calculateHeight(){
+			// 获取元素
+			let foodlist = this.$refs.foodScroll.getElementsByClassName("food-list-hook")
+			// console.log(foodlist)
+
+			let height = 0
+			this.listHeight.push(height)
+
+			for(let i = 0; i < foodlist.length; i++){
+				let item = foodlist[i]
+				// 累加
+				height += item.clientHeight
+				this.listHeight.push(height)
+			}
+			// console.log(this.listHeight)
+			},
+
+		// DOM已经更新
+          this.$nextTick(() => {
+            // 执行滚动方法
+            this.initScroll()
+		联动4步:
+            // 1.计算分类的区间高度
+            this.calculateHeight()
+            // 2.监听滚动的位置
+            // 3.根据滚动位置确认下标,与左侧对应
+            // 4.通过下标实现点击左侧,滚动右侧
+          })
+	4.判断scroll滚动的Y值是否在内容列表的两个元素之间(两个元素的索引)
+		better-scroll滚动会有一个Y值,利用这个Y值判断当前滚动在那个区间
+		如果再就返回下标,不在就返回0---这里要判断是否越界
+
+	5.点击左侧列表转到右侧对应的内容
+		selectMenu(index){
+			// console.log(index)
+			let foodlist = this.$refs.foodScroll.getElementsByClassName("food-list-hook")
+			let element = foodlist[index]
+			// console.log(element)
+			// 滚动到对应元素的位置
+			this.foodScroll.scrollToElement(element,250)
+		},
+
+10.加减添加按钮 
+	1.将加减设置为display:inline-block   父盒子设置font-size:0
+
+	2.加减数量的count属性设置(在api中没有提供下单数量)
+		Vue.set(this.food, "count", 1);//往this.food对象中添加count属性,值为1
+
+	3.在父组件中使用计算属性computed将数据先传给子组件(加减组件),接收后再用computed计算属性计算一次
+
+	4.点击购物车查看列表时,因为添加购物车是动态添加的.使用better-scroll有个刷新方法实时刷新添加的购物车列表
+		if (show) {//如过购物车又数据
+        this.$nextTick(() => {
+          if (!this.shopScroll) {//判断滚动数据有无变化
+            this.shopScroll = new BScroll(this.$refs.listContent, {
+              click: true
+            });
+          } else {//有变化就刷新添加
+            this.shopScroll.refresh();
+          }
+        });
+      }
+
+11.点击列表进入子组件-详情页中(父组件中调用子组件中的方法)
+
+	1.在子组件详情页面的方法中定义一个方法
+		methods:{
+			showView(){//父级Goods.vue中调用
+				...
+			},
+
+		}
+	
+	2.在父组件中调用子组件的方法
+		foodView为父级点击的li设置的的ref="foodView"
+		
+		//父级调用方法
+		showDetail(food){
+			...
+			this.$refs.foodView.showView()//调用子组件的showView方法
+		}
+	3.点击加减按钮阻止冒泡
+
+		@click.stop.prevent="increaseCart"
+
+	4.图片加载占位技巧
+
+		有时候网络请求图片延迟导致高度没法撑开,在父盒子加入样式,可实现高度占位
+
+		.img-wrapper{
+			position: relative;
+			width: 100%;
+			height: 0;
+			padding-top: 100%;//bottom也行,根据宽度来撑开,也就是高和宽度一样的
+		}
+
+	5.滑入屏幕过渡动画
+
+		vue动画地址:https://cn.vuejs.org/v2/guide/transitions.html#CSS-%E5%8A%A8%E7%94%BB
+
+		点击查看详情,滑出详情页面(右边滑出/左边滑出)
+
+		使用transition标签包裹需要动画的盒子
+		<transition name="move">
+			div盒子---需要动画的盒子
+		</transition>
+
+		.move-enter-active, .move-leave-active {
+			transition:  1.0s
+		}
+		.move-enter, .move-leave-to {
+			transform: translateX(100%);//可以是Y,即从底部滑出来
+		}
+
+12.在methods中想页面加载就使用better-scroll,使用this.$nextTick()
+
+	showView(){//父级Goods.vue中调用的方法
+        this.showFlag = true
+
+        this.$nextTick(() => {//确保元素加载完毕
+          if(!this.scroll){
+            this.scroll = new BScroll(this.$refs.foodView,{
+              click:true
+            })
+          }else{
+            this.scroll.refresh()
+          }
+        })
+      },
+
+13.评分组件需要传递score的属性绑定数据
+
+		只需要绑定数据使用,即可使用评分显示
+
+14.计算属性中写评价选项卡(有图和无图)的方法
+
+		遍历方法,让方法返回一个数组 selectComments()方法
+		v-for="(comment,index) in selectComments" 
+
+15.格式化时间戳(毫秒)
+		formatDate(time){
+        let date = new Date(time * 1000);
+				let fmt = 'yyyy.MM.dd';
+				if(/(y+)/.test(fmt)) { // 年
+					let year = date.getFullYear().toString();
+					fmt = fmt.replace(RegExp.$1, year);
+				}
+				if(/(M+)/.test(fmt)) { // 月
+					let mouth = date.getMonth() + 1;
+					if(mouth < 10) {
+						mouth = '0' + mouth;
+					}
+					fmt = fmt.replace(RegExp.$1, mouth);
+				}
+				if(/(d+)/.test(fmt)) { // 日
+					let mydate = date.getDate();
+					if(mydate < 10) {
+						mydate = '0' + mydate;
+					}
+					fmt = fmt.replace(RegExp.$1, mydate);
+				}
+				return fmt;
+    }
+
+16.使用keep-alive避免重复传染,将App.vue中的<router-link>包裹起来,保留选项卡切换前后已有的数据不丢失
+
+17.真机调试
+
+	1.进入config下的index.js中将localhost地址换成0.0.0.0
+		端口改为8081,weinre默认是8080,避免冲突修改
+
+	2.安装npm i -g weinre	//手机调试用的
+
+	3.使用命令启动,IP是自己电脑IP地址
+			weinre --boundHost 192.168.5.52
+
+	4.打开网址: http://192.168.5.52:8080
+
+		将http://192.168.5.52:8080/target/target-script-min.js#anonymous设置为script标签的src地址, 将script引入index.html中,
+
+	5.手机访问以上网址就可以调试了(需要再同一个网络中)
+
+18.打包和node调试
+	1.修改config下index.js文件内的build对象内的Source Maps
+		productionSourceMap: false,//改为false,调试用的,占用空间大,关闭
+
+	2.打包直接使用npm run build
+
+	3.新建app-server.js  用node作为服务打开
+
+	4.使用命令node app-server.js运行服务,打开地址即可
+
+
+
+
+
+vue自动生成id
+
+	uuid 
+	
+	npm i uuid
+
+	引入import uuid from 'uuid'
+
+	使用id:uuid.v4()
+
+	QQ群:701206626
+

@@ -1,0 +1,232 @@
+﻿准备:
+
+1.先克隆git仓库
+
+	git clone xxx.github.com
+
+	再执行
+
+	vue init webpack xxx
+
+2.Vue组件主页组件布局完后
+
+	安装fastclick依赖
+
+	fastclick为了解决移动设备上的浏览器默认会在用户点击屏幕大约延迟300毫秒
+
+	npm i fastclick 需要另一个ajv依赖
+
+	npm i ajv@^6.9.1
+
+	npm i stylus stylus-loader -D
+
+3.在maim.js中引入
+
+	import fastClick from 'fastClick'
+
+	使用fastClick.attach(document.body)
+
+
+4.在reset.css中html的 font-size:50px 采用rem布局 1rem = 50px;  10px=0.2rem
+
+5.安装轮播插件 github搜索vue-awesome-swiper安装
+
+	npm install vue-awesome-swiper --save
+
+6.穿透 >>> swiper轮播组件是外来组件,修改样式需要用
+
+	.wrapper 	包裹div类名(手写的类)
+
+	.swiper-pagination-bullet是渲染页面的指示灯的类
+
+	.wrapper >>> .swiper-pagination-bullet{color:#fff;}
+
+7.安装axios页面加载就执行 函数写在methods:{}里, 在mounted(){}方法内调用
+
+
+8.安装better-scroll移动端滚动框架
+
+	npm i better-scroll
+
+9.搜索框地址匹配
+
+	用到中国拼音编码   utils.js
+
+10.安装vuex
+
+	npn install vuex --save
+
+  1.在store.js里面写
+
+  	import Vue from 'vue'
+  	import Vuex from 'vuex'
+  	Vue.use(Vuex)
+  	export default new Vuex.Store({
+      		state:{
+          		city:'北京'
+      		},
+      		actions:{
+
+      		},
+      		mutations:{
+
+      		}
+  	})
+  2.在main.js引入
+
+   import store from './store/store.js',并注册到new Vue({store})中
+
+
+  3.在每个组件中就可以使用了
+
+	例如在一个组件中使用
+	<div> {{this.$store.state.city}} </div>
+
+11.将百度API请求定位逻辑改放入main.js全局中的mounted方法里
+
+    new Vue({
+      el: '#app',
+      router,
+      store,
+      components: { App },
+      template: '<App/>',
+      mounted(){
+        //获取真实定位地址
+        let map = new BMap.Map("allmap")
+        let myCity = new BMap.LocalCity()
+        myCity.get((result)=>{
+          console.log('当前定位地址:',result.name);
+          if (result) {
+
+            this.$store.state.city = result.name
+          }else{
+            this.city = '获取位置信息失败'
+          }
+        });
+      }
+    })
+
+12.点击城市列表中的城市/热门城市/当前城市,派发数据,跳转路由
+  	Vue.use(Vuex)
+    export default new Vuex.Store({
+        state:{
+            city:'北京'
+        },
+        actions:{
+            //1.监听change
+            change(ctx,city){
+                //2.派发city数据
+                ctx.commit('change',city)
+            }
+        },
+        mutations:{
+            //3.修改数据
+            change(state,city){
+                state.city = city
+            }
+        }
+    })
+
+    跳转路由方法
+    handleCurrentClick(city){
+      // 1.派发事件更改store数据状态
+      this.$store.dispatch('change',city)
+      // 2.回首页--编程式导航
+      this.$router.push('/')
+    }
+
+13.详情页面的路由为动态路由,由各个详情内容跳转对应的详情页
+
+  在router文件夹下的index.js配置动态路由(引入+注册)
+
+    import Detail from '@/page/detail/Detail'
+
+    {
+      path: '/detail/:id',
+      name: 'Detail',
+      component: Detail
+    }
+
+  点击跳转按钮,携带点击的id
+
+     <router-link
+      tag="div"
+      class="guess-content"
+      v-for="item of guessList"
+      :key="item.id"
+      :to='"/detail/"+item.id'
+    >xxxx</router-link>
+
+  在详情页接收id,请求数据
+
+    getDetailData(){
+      axios.get("/api/detail.json?id="+this.$route.params.id)
+          .then(this.getDetailDataSucc)
+    },
+
+14.1 detil-swiper轮播使用嵌套路由(点击轮播图片,下方tab栏数据改变)
+  1)
+  <router-link to="galary" append>
+    <img src="" />
+  </router-link>
+
+  2) 在router文件夹下的index.js配置children嵌套路由
+    {
+      path: '/detail/:id',
+      name: 'Detail',
+      component: Detail,
+      children:[
+        {
+          path:'galary',
+          component:detailGalary
+        }
+      ]
+    }
+    3) 在Detail里加一个<router-view></router-view>来显示tab内容
+
+14.2 使用ly-tab插件来实现
+
+    地址:https://github.com/ScoutYin/ly-tab
+
+    安装
+    npm i ly-tab -S
+
+    使用
+    import Vue from 'vue'
+    import LyTab from 'ly-tab'
+
+    Vue.use(LyTab)//可在全局使用了
+
+    (在computed方法添加数组数据不需要id)
+
+    判断渲染哪个组件,需要通过事件获得点击的是哪个选项
+    <div>
+      <ly-tab
+        :items="items"
+        @change="handleClick"
+      >
+      </ly-tab>
+      <component :is="type"></component>
+    </div>
+
+15.mapContent地图组件使用Mint UI框架
+
+  使用Navbar , 引入
+  import { Navbar, TabItem } from 'mint-ui'
+
+  搭配tab-container组件使用
+  地址:http://mint-ui.github.io/docs/#/zh-cn2/navbar
+
+16.创建地图
+  使用new BMap.Map(挂载Dom)创建一个地图
+
+
+
+
+
+
+
+
+
+
+
