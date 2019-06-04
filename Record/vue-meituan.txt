@@ -1,5 +1,5 @@
 ﻿	
-		仿美团
+		copy meituan
 
 1.svg转换iocn图标	
 
@@ -53,34 +53,34 @@
 
 5.请求数据
 
-	1.在App.vue中使用fetch请求数据
+	1.在App.vue中使用fetch请求数据//浏览器提供,支持跨域
 
 	2.在created方法中请求到数据然后通过属性绑定传入header组件中
 
 	3.goods.vue中再created属性中使用fetch请求数据,绑定到购物车,详情, 列表中去
 
 6.公告弹窗的过渡动画
-	1.使用transition标签包裹需要动画的元素,动画名称为name属性值bulletin
+	1.使用transition标签包裹需要动画的元素,动画名称为name属性值move
 
-		<transition name="bulletin"> 
+		<transition name="move"> 
 			这里是动画的包裹盒子
 		</transition>
 
 	2.编写css过渡动画样式
 
 		/* 动画效果 */ 
-		.bulletin-enter-active,
-		.bulletin-leave-active {
+		.move-enter-active,
+		.move-leave-active {
 			transition: 2s all;
 		}
 
-		.bulletin-enter,
-		.bulletin-leave-to {
+		.move-enter,
+		.move-leave-to {
 			opacity: 0;
 		}
 
-		.bulletin-enter-to,
-		.bulletin-leave {
+		.move-enter-to,
+		.move-leave {
 			opacity: 1;
 		}
 
