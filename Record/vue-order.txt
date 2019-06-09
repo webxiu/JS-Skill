@@ -1,0 +1,347 @@
+    vue 2.0 构建订单系统
+
+## 1.生成简单配置的项目脚手架 -simple
+
+    vue init webpack-simple vue-order
+
+    cd vue-order
+
+    npm install
+
+    在src下面新建components文件夹,用于再里面下组件
+
+    引入bootstrap的css用于布局使用
+
+        <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    在Header组件中写导航...
+## 2.路由配置
+    1.安装vue-router
+        npm i vue-router --save
+    2.引入路由并使用
+        import VueRouter from 'vue-router'
+        Vue.use(VueRouter)
+    3.定义路由
+        const routes = [
+            {path:'/',name:Home,component:Home},
+            {path:'/menu',name:Menu,component:Menu},
+            {path:'*',redirect:'/'}//路由错误跳这里
+        ]
+    4.实例化路由
+        const router = new VueRouter({
+            routers,
+            mode:history
+        })
+    5.注册路由
+        new Vue({
+            el: '#app',
+            router,//注册路由
+            render: h => h(App)
+        })
+    6.点击按钮执行方法跳转路由的方式
+        goToMenu(){
+            // 跳转到上一次浏览的页面
+            // this.$router.go(-1)
+
+            // 指定跳转的地址
+            // this.$router.replace('/menu')
+
+            // 指定跳转路由的名字下
+            // this.$router.replace({name:'menuLink'})
+
+            // 通过push进行跳转
+            // this.$router.push('/menu')
+            this.$router.push({name:'menuLink'})
+        }
+    7. 有三级页面切换的时候,给显示内容一个默认的显示
+
+        redirect:'/about/contact',
+    
+## 3.路由守卫
+    1.路由全局守卫
+        router.beforeEach((to,from,next)=>{
+            console.log(to.path)
+            if(to.path == '/login' || to.path == '/register'){
+                next()
+            }else{
+                alert('还没有登录')
+                next('/login')
+            }
+        })
+    2.路由独享守卫
+        beforeEnter:(to,from,next)=>{
+            alert('非登陆状态不能访问此页面')
+            next(false)//为false不拦截
+        }
+    3.进入页面
+        beforeRouterEnter:(to,from,next) =>{
+            alert('999'+this.name)//拿不到name
+            next(vm=>{
+                alert('999'+vm.name)//拿到name
+                
+            })
+        },
+   4.离开页面
+        beforeRouterLeave:(to,from,next) =>{
+            if(confirm("确定离开吗?")==true){
+                next()//放行
+            }else{
+                next(false)//阻止
+            }
+        },
+
+## 4.home页面显示其他组件
+    {path:'/',name:'henuLink',component:Home},
+    改为
+    {path:'/',name:"homeLink",components:{
+        default:Home,
+        'orderingGuide':OrderingGuide,
+        'delivery':Delivery,
+        'history':History
+    }},
+## 5.滚动行为
+   scrollBehavior(to, from, savedPosition) {
+    // return { x:0, y:100 }
+    // return { selector: '.btn'}
+
+    if (savedPosition) {//只有触发前进/后退按钮才会触发
+      return savedPosition;
+    } else {
+      return { x: 0, y: 0 };
+    }
+  }
+
+## 6.axios使用
+    1.安装/引用
+    2.配置默认根路径
+        axios.defaults.baseURL = 'https://wd0992259444dcaaxf.wilddogio.com/';
+    3.注册跳转登录
+        //引入axios
+        onSubmit(){
+            if(this.password === this.confirmPassword){
+            const formData = {
+                email:this.email,
+                password:this.password,
+                confirmPassword:this.confirmPassword
+            }
+
+            axios.post('/users.json',formData)
+                .then(res => this.$router.push({name:'loginLink'}))
+
+            }else{
+            alert("两次密码不一致!")
+            }
+        }
+    4.登录跳转主页
+        if(result != null && result.length > 0){
+            this.$store.dispatch("setUser",result[0].email)
+            this.$router.push({name:"homeLink"})//跳转首页
+            this.$store.dispatch('setLogin', true)
+
+        }else{
+        alert("账号或密码错误!")
+            this.$store.dispatch("setUser",null)
+            this.$store.dispatch('setLogin', false)
+        }
+    5.加减数量
+        //递减
+            decreaseQuantity(item){
+                item.quantity--
+
+                if(item.quantity <= 0){
+                    this.removeFromBasket(item)//执行删除
+                }
+            },
+        //递增
+            increaseQuantity(item){
+                item.quantity++
+            },
+
+        //删除方法
+            removeFromBasket(item){//遍历的item选项
+                this.baskets.splice(this.baskets.indexOf(item),1)
+            }
+        //已经存在的只加数量
+
+            addToBasket(item,option){
+                let basket = {
+                    name:item.name,
+                    size:option.size,
+                    price:option.price,
+                    quantity:1
+                }
+
+                if(this.baskets.length > 0){//购物车已经有商品
+                    // 过滤已经存在的,item点击传进来的和已有的比较
+                    let result = this.baskets.filter( (basket) => {
+                        return (basket.name === item.name && basket.price === option.price)
+                    })
+                    
+                    if(result != null && result.length > 0){//再判断存在只加数量
+                        //
+                        result[0].quantity++
+                    }else{//不存在将添加整条数据
+                        this.baskets.push(basket)
+                    }
+
+                }else{
+                    this.baskets.push(basket)
+                }
+            },
+
+        //遍历对象,再为对象新增一个id(对象里面有唯一值)
+            let menuArray = [];
+            for (let key in data) {
+                data[key].id = key;
+                menuArray.push(data[key]);
+            }
+
+## 7.配置全局的axios
+        1.现在main全局定义
+            Vue.prototype.$axios = axios;
+
+        2.使用
+            this.$axios.post()
+            this.$axios.get()
+
+        3.使用fetch删除数据
+            fetch("https://m.abc.com/menu/" + item.id + "/.json",
+                {
+                method: "DELETE",
+                headers: {"Content-type": "application/json"}
+                }
+            ).then(res => res.json())
+             .then(data => {
+                this.$store.commit("removeMenuItems", item);
+             }).catch(err => console.log(err));
+            }
+
+## 8.使用vue的状态管理vuex
+
+        1.新建store文件夹,新建store.js
+
+        2.tore.js中书写格式
+            import Vue from "vue";
+            import Vuex from "vuex";
+            Vue.use(Vuex)
+            export const store = new Vuex.Store({
+                state:{
+                },
+                getters:{
+                },
+                mutations:{
+                },
+                actions:{
+                }
+            })
+        3.在main.js中引用store.js(根据路径来)
+            import {store} from './store/store.js';
+
+        4.放到vue实例中使用
+            new Vue({
+                el: '#app',
+                router,
+                store,//应用store
+                render: h => h(App)
+            })
+        5.在事件(或axios请求)中派发数据到store
+            this.$store.commit("setMenuItems",res.data)
+        6.存储数据
+             mutations: {
+                //改变属性的状态
+                setMenuItems(state,data){
+                    state.menuItems = data//存储数据
+                }
+            },
+        7.在组件的computed中获取数据,通过return返回数据,使用时直接遍历getMenuItems即可
+            computed:{
+                getMenuItems(){//----------------------方法
+                    // 在vuex中获取数据
+                    // return this.$store.state.menuItems
+                    // 通过getters获取数据
+                    return this.$store.getters.getMenuItems
+                },
+            }
+
+            如果上面的拿不到数据,提示setter未定义,使用对象的方式处理
+            computed: {
+                getMenuItems: {//----------------------对象
+                // 在vuex中获取数据
+                get() {
+                    // return this.$store.state.menuItems
+                    // 通过getters获取数据
+                    return this.$store.getters.getMenuItems;
+                },
+                set() {}
+                }
+            },
+        8.删除数据同步显示,解决刷新才看到已删掉了,也需要commit一次
+
+            this.$store.commit("removeMenuItems", item);
+
+        9.使用getter获取数据(使用.state和.getter获取数据一样的都可以用)
+
+            原先使用this.$store.state.menuItems获取数据,会向外界暴露menuItems
+            使用getter直接使用结构获取
+                this.$store.getters.getMenuItems//只是暴露方法名
+
+        10.首页面获取用户名和登录状态在computed中获取
+            computed:{
+                currentUser(){//返回获得用户名
+                    return this.$store.getters.currentUser
+                },
+                isLogin(){//返回获得登录状态
+                    return this.$store.getters.isLogin
+                }
+            }
+
+        11.提交数据的两种方法
+            1.获取数据直接commit
+            
+                1) this.$store.commit("removeMenuItems", item);
+
+                2) 在store的mutations中存数据
+                    mutations: {
+                        //改变属性的状态
+                        setMenuItems(state,data){
+                            state.menuItems = data//存储数据
+                        },
+                    }
+
+            2.使用despatch
+
+                1) this.$store.dispatch('setLogin', true)
+
+                2) 在store的actions中commit数据
+                    actions: {
+                        //引用mutations
+                        setUser({commit},user){
+                            commit("userStatus",user)
+                        }
+                    }
+                3) 在store的mutations中存数据
+
+                    userStatus(state,user){
+                        if(user){
+                            state.currentUser = user
+                            state.isLogin = true
+                        }else{
+                            state.currentUser = null
+                            state.isLogin = false
+                        }
+                    }
+
+## 9.登录组件设置导航守卫,只要进入登录界面就清空登录信息(和data写再同级)
+    data(){
+        ...
+    },
+    // 组件内的守卫
+    beforeRouteEnter: (to, from, next) => {
+      // this.$store.dispatch("setUser",null)
+      next(vm => {//next是为了等组件加载完毕获取数组
+        vm.$store.dispatch("setUser",null)
+        vm.$store.dispatch('setLogin', false)
+      })
+    },
+                
+                
