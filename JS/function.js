@@ -9,6 +9,7 @@
  * 8.将时间戳转换成日期 //1507477547--->2017.10.08
  * 9.文件大小单位转换
  * 10.通过canvas的toDataURL获取图片的base 64编码url地址(上传图片获取地址预览)
+ * 11. Cookie的设置 获取 和删除
  */
 
 
@@ -212,7 +213,7 @@ export default function resizeImage (url, width, height, callback) {
       canvas.width = width
       canvas.height = height
       sourceImage.src = url
-  
+
       if (sourceImage.width === sourceImage.height) {//图片宽高相等
         canvas.getContext('2d').drawImage(sourceImage, 0, 0, width, height)
       } else {//图片宽高不相等取最小的
@@ -225,10 +226,38 @@ export default function resizeImage (url, width, height, callback) {
       }
       callback(canvas.toDataURL())
     }
-  
-  }
-  
 
+  }
+
+// 11. Cookie的设置 获取 和删除
+    // 设置cookies
+    function setCookie(name,value,days){
+        var days = days || 30;
+        var exp = new Date();
+        exp.setTime(exp.getTime() + days*24*60*60*1000);
+        document.cookie = name + "="+ escape (value) + ";path:/;expires=" + exp.toGMTString();
+    }
+
+    // 获取cookies
+    function getCookie(name){
+        var arr,reg=new RegExp("(^| )"+name+"=([^;]*)(;|$)");
+
+        if(arr=document.cookie.match(reg))
+
+            return unescape(arr[2]);
+        else
+            return null;
+    }
+    // 删除cookies
+    function delCookie(name){
+        var exp = new Date();
+        exp.setTime(exp.getTime() - 1);
+        var cval=getCookie(name);
+        if(cval!=null)
+            document.cookie= name + "="+cval+";path:/;expires="+exp.toGMTString();
+    }
+    // 使用
+    var coupon = getCookie("lsb2_coupon");
 
 
 
