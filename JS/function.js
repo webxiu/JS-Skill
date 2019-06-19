@@ -10,6 +10,7 @@
  * 9.文件大小单位转换
  * 10.通过canvas的toDataURL获取图片的base 64编码url地址(上传图片获取地址预览)
  * 11. Cookie的设置 获取 和删除
+ * 12.生成指定长度随机字符串
  */
 
 
@@ -262,10 +263,10 @@
 // 12.生成指定长度随机字符串
     function randomString(length){
         var len = length || 32;
-        /****默认去掉了容易混淆的字符oOLl,9gq,Vv,Uu,I1****/
+        /***默认去掉了容易混淆的字符oOLl,9gq,Vv,Uu,I1***/
         var chars = '2345678ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678';
         var maxPos = chars.length;
-        var str = "";
+        var str = '';
         for(var i=0;i<len;i++){
             str += chars.charAt(Math.floor(Math.random() * maxPos));
         }
